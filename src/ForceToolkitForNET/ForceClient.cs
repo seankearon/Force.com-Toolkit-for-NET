@@ -5,8 +5,10 @@ using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using System.Reflection;
+using Newtonsoft.Json.Linq;
 using Salesforce.Common;
 using Salesforce.Common.Models;
+using Salesforce.Common.Models.Many;
 
 namespace Salesforce.Force
 {
@@ -84,6 +86,33 @@ namespace Salesforce.Force
             if (record == null) throw new ArgumentNullException("record");
 
             return await _serviceHttpClient.HttpPostAsync<SuccessResponse>(record, string.Format("sobjects/{0}", objectName)).ConfigureAwait(false);
+        }
+
+        public async Task<SuccessResponseManyResults> CreateManyAsync(string objectName, object[] records)
+        {
+            if (string.IsNullOrEmpty(objectName)) throw new ArgumentNullException("objectName");
+            if (records == null) throw new ArgumentNullException("record");
+
+            var multipleCreationFormat = ToMultipleCreationFormat(objectName, records);
+            return await _serviceHttpClient.HttpPostAsync<SuccessResponseManyResults>(multipleCreationFormat, string.Format("composite/tree/{0}", objectName), true).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Converts an array of objects to the format required for the API serialisation.
+        /// https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/dome_composite_sobject_tree_flat.htm
+        /// References for each item are the item's index in the input array.
+        /// </summary>
+        private object ToMultipleCreationFormat(string objectName, object[] objects)
+        {
+            var records = new JArray();
+
+            for (int i = 0; i < objects.Length; i++)
+            {
+                var o = JObject.FromObject(objects[i]);
+                o["attributes"] = JObject.FromObject(new { type = objectName, referenceId = $"{i}" });
+                records.Add(o);
+            }
+            return new JObject { ["records"] = records };
         }
 
         public Task<SuccessResponse> UpdateAsync(string objectName, string recordId, object record)

@@ -149,6 +149,28 @@ namespace Salesforce.Force.FunctionalTests
         }
 
         [Test]
+        public async Task Create_Many_Account_Typed()
+        {
+            var account1 = new Account { Name = "New Account 1", Description = "New Account 1 Description" };
+            var account2 = new Account { Name = "New Account 2", Description = "New Account 2 Description" };
+            var successResponse = await _client.CreateManyAsync("Account", new object[] { account1, account2 });
+
+            Assert.That(successResponse.HasErrors, Is.False);
+            Assert.AreEqual(2, successResponse.Results.Length);
+        }
+
+        [Test]
+        public async Task Create_Many_Bad_Objects()
+        {
+            var account1 = new  { BadName = "New Account 1", BadDescription = "New Account 1 Description" };
+            var account2 = new  { BadName = "New Account 2", BadDescription = "New Account 2 Description" };
+            var successResponse = await _client.CreateManyAsync("Account", new object[] { account1, account2 });
+
+            Assert.That(successResponse.HasErrors, Is.False);
+            Assert.AreEqual(2, successResponse.Results.Length);
+        }
+
+        [Test]
         public async Task QueryAll_Accounts_IsNotEmpty()
         {
             var accounts = await _client.QueryAllAsync<Account>("SELECT Id, name, description FROM Account");
@@ -240,8 +262,6 @@ namespace Salesforce.Force.FunctionalTests
 
             Assert.IsNotNull(success);
         }
-
-
 
         [Test]
         public async Task Update_Account_NullValues()

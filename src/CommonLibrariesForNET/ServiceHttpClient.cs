@@ -186,6 +186,11 @@ namespace Salesforce.Common
 
         public async Task<T> HttpPostAsync<T>(object inputObject, string urlSuffix)
         {
+            return await HttpPostAsync<T>(inputObject, urlSuffix, false);
+        }
+
+        public async Task<T> HttpPostAsync<T>(object inputObject, string urlSuffix, bool includeRawJsonErrorResponse)
+        {
             var uri = Common.FormatUrl(urlSuffix, _instanceUrl, ApiVersion);
             var json = JsonConvert.SerializeObject(inputObject,
                 Formatting.None,
@@ -209,14 +214,20 @@ namespace Salesforce.Common
 
             if (responseMessage.Content.Headers.ContentType != null && responseMessage.Content.Headers.ContentType.ToString().Contains("application/json"))
             {
-                var errorResponse = JsonConvert.DeserializeObject<ErrorResponses>(response);
-                throw new ForceException(errorResponse[0].ErrorCode, errorResponse[0].Message);
+                if (!includeRawJsonErrorResponse)
+                {
+                    var errorResponse = JsonConvert.DeserializeObject<ErrorResponses>(response);
+                    throw new ForceException(errorResponse[0].ErrorCode, errorResponse[0].Message);
+                }
+                else
+                {
+                    throw new ForceException("Raw JSON Errors", response);
+                }
             }
             else
             {
                 throw new ForceException(Error.NonJsonErrorResponse, response);
             }
-
         }
 
         public async Task<T> HttpPostAsync<T>(object inputObject, Uri uri)

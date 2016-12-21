@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Salesforce.Common.Models;
+using Salesforce.Common.Models.Many;
 
 namespace Salesforce.Force
 {
@@ -14,6 +15,7 @@ namespace Salesforce.Force
         Task<T> ExecuteRestApiAsync<T>(string apiName);
         Task<T> ExecuteRestApiAsync<T>(string apiName, object inputObject);
         Task<SuccessResponse> CreateAsync(string objectName, object record);
+        Task<SuccessResponseManyResults> CreateManyAsync(string objectName, object[] records);
         Task<SuccessResponse> UpdateAsync(string objectName, string recordId, object record);
         Task<SuccessResponse> UpsertExternalAsync(string objectName, string externalFieldName, string externalId, object record);
         Task<bool> DeleteAsync(string objectName, string recordId);
